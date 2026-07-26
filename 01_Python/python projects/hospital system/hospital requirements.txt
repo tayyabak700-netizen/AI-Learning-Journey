@@ -1,0 +1,69 @@
+Project Requirements
+
+Socho ke ye project ek chhote hospital ke liye ban raha hai.
+
+Main Menu
+===== Hospital Management System =====
+
+1. Add Patient
+2. View Patients
+3. Search Patient
+4. Update Patient
+5. Delete Patient
+6. Doctor Management
+7. Appointment Management
+8. Exit
+Patient Module
+
+Har patient ki information:
+
+Patient ID (Automatic ya Manual)
+Name
+Age
+Gender
+Phone Number
+Address
+Disease
+Doctor Name
+Admission Date
+Patient Features
+Add Patient
+View All Patients
+Search Patient by ID
+Search Patient by Name
+Update Patient
+Delete Patient
+Doctor Module
+
+Doctor ki information:
+
+Doctor ID
+Name
+Specialization
+Experience
+Phone Number
+
+Features:
+
+Add Doctor
+View Doctors
+Search Doctor
+Update Doctor
+Delete Doctor
+Appointment Module
+
+Appointment mein:
+
+Appointment ID
+Patient ID
+Doctor ID
+Date
+Time
+
+Features:
+
+Book Appointment
+View Appointments
+Cancel Appointment
+File Storage
+

@@ -1,0 +1,12 @@
+[
+    {
+        "patient_id": "AN1341",
+        "name": "tayyaba",
+        "age": "21",
+        "gender": "female",
+        "contact_number": "897",
+        "address": "okara",
+        "blood_group": "B+",
+        "disease": "headache"
+    }
+]
