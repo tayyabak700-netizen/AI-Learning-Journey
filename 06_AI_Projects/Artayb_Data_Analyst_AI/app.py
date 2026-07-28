@@ -1,21 +1,33 @@
 import streamlit as st
 import pandas as pd
 
+
+# ---------------- PAGE SETTINGS ----------------
+
 st.set_page_config(
-    page_title="Artayb Data Analyst AI",
-    page_icon="🤖",
+    page_title="Artayb Analytics Studio",
+    page_icon="📊",
     layout="wide"
 )
 
+
+# ---------------- APP HEADER ----------------
+
 st.title("Artayb Analytics Studio")
+
 st.caption(
-    "Turn your raw CSV data into clear summaries, visuals, and useful insights."
+    "Turn your raw CSV data into clear summaries, "
+    "visuals, and useful insights."
 )
+
+
+# ---------------- SIDEBAR ----------------
 
 st.sidebar.title("📊 Artayb Studio")
 
 st.sidebar.info(
-    "Start by uploading a CSV file. Artayb will organize and summarize your data."
+    "Upload a CSV file to explore, analyze, "
+    "and clean your data."
 )
 
 st.sidebar.markdown("""
@@ -23,19 +35,68 @@ st.sidebar.markdown("""
 
 - Data preview
 - Column explorer
-- Dataset health check
+- Dataset information
 - Missing-data report
+- Data types
 - Statistical overview
 - Interactive visualization
+- Data quality score
+- Smart cleaning
 - Downloadable results
 """)
 
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+
+# ---------------- FILE UPLOAD ----------------
+
+uploaded_file = st.file_uploader(
+    "Upload your CSV file",
+    type=["csv"]
+)
+
+
+# ---------------- DATA ANALYSIS ----------------
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
 
-    st.subheader("🎯 Select Columns")
+    # Save uploaded data in session state
+    if (
+        "raw_df" not in st.session_state
+        or st.session_state.get(
+            "uploaded_file_name"
+        ) != uploaded_file.name
+    ):
+
+        st.session_state["raw_df"] = (
+            pd.read_csv(uploaded_file)
+        )
+
+        st.session_state["cleaned_df"] = (
+            st.session_state["raw_df"].copy()
+        )
+
+        st.session_state[
+            "uploaded_file_name"
+        ] = uploaded_file.name
+
+        st.session_state[
+            "is_cleaned"
+        ] = False
+
+
+    # Original dataset
+    df = st.session_state["raw_df"]
+
+
+    # ---------------- SUCCESS MESSAGE ----------------
+
+    st.success(
+        "CSV file uploaded successfully!"
+    )
+
+
+    # ---------------- COLUMN EXPLORER ----------------
+
+    st.subheader("🎯 Column Explorer")
 
     selected_columns = st.multiselect(
         "Choose columns you want to view",
@@ -44,154 +105,258 @@ if uploaded_file is not None:
     )
 
     if selected_columns:
-        st.dataframe(df[selected_columns])
 
-    st.success("File uploaded successfully!")
+        st.dataframe(
+            df[selected_columns],
+            use_container_width=True
+        )
+
+
+    # ---------------- DATA PREVIEW ----------------
+
     st.subheader("📄 First 5 Records")
-    st.dataframe(df.head())
+
+    st.dataframe(
+        df.head(),
+        use_container_width=True
+    )
+
+
+    # ---------------- DATASET INFORMATION ----------------
+
     st.subheader("📊 Dataset Information")
 
-    st.write("Rows:", df.shape[0])
-    st.write("Columns:", df.shape[1])
+    col1, col2 = st.columns(2)
 
-    st.write("Column Names:")
-    st.write(df.columns.tolist())
+    col1.metric(
+        "Total Rows",
+        df.shape[0]
+    )
+
+    col2.metric(
+        "Total Columns",
+        df.shape[1]
+    )
+
+    st.write(
+        "**Column Names:**",
+        df.columns.tolist()
+    )
+
+
+    # ---------------- MISSING VALUES ----------------
 
     st.subheader("🔍 Missing Values")
 
-    missing_values = df.isnull().sum()
+    missing_values = (
+        df.isnull().sum()
+    )
 
-    st.write(missing_values)
+    st.dataframe(
+        missing_values,
+        use_container_width=True
+    )
+
+
+    # ---------------- DATA TYPES ----------------
 
     st.subheader("📋 Data Types")
 
-    st.write(df.dtypes)
+    st.dataframe(
+        df.dtypes,
+        use_container_width=True
+    )
 
-    st.subheader("📈 Statistical Summary")
 
-    st.write(df.describe())
+    # ---------------- STATISTICAL SUMMARY ----------------
 
-    st.subheader("📊 Data Visualization")
+    st.subheader(
+        "📈 Statistical Summary"
+    )
 
-    numeric_columns = df.select_dtypes(include="number").columns.tolist()
+    numeric_columns = (
+        df.select_dtypes(
+            include="number"
+        )
+        .columns
+        .tolist()
+    )
 
     if numeric_columns:
+
+        st.dataframe(
+            df.describe(),
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No numeric columns are available "
+            "for statistical analysis."
+        )
+
+
+    # ---------------- VISUALIZATION ----------------
+
+    st.subheader(
+        "📊 Data Visualization"
+    )
+
+    if numeric_columns:
+
         selected_column = st.selectbox(
             "Select a numeric column",
             numeric_columns
         )
 
-        st.bar_chart(df[selected_column])
+        st.bar_chart(
+            df[selected_column]
+        )
+
     else:
-        st.warning("No numeric columns found in this dataset.")
 
-    st.subheader("⬇️ Download Data")
+        st.warning(
+            "No numeric columns were found "
+            "for visualization."
+        )
 
-    csv_data = df.to_csv(index=False).encode("utf-8")
 
-    st.download_button(
-        label="Download CSV",
-        data=csv_data,
-        file_name="analyzed_data.csv",
-        mime="text/csv"
+    # ---------------- SMART SUMMARY ----------------
+
+    st.subheader(
+        "✨ Artayb Smart Summary"
     )
 
-    st.subheader("✨ Artayb Smart Summary")
+    total_missing = (
+        df.isnull().sum().sum()
+    )
 
-    total_missing = df.isnull().sum().sum()
-    st.write(f"📊 This dataset contains {df.shape[0]} rows and {df.shape[1]} columns.")
-    
+    st.write(
+        f"This dataset contains "
+        f"**{df.shape[0]} rows** and "
+        f"**{df.shape[1]} columns**."
+    )
+
     if total_missing == 0:
-        st.success("✅ Great! No missing values were found in the dataset.")
+
+        st.success(
+            "Great! No missing values "
+            "were found."
+        )
+
     else:
+
         st.warning(
-            f"⚠️ The dataset contains {total_missing} missing values."
+            f"The dataset contains "
+            f"**{total_missing} missing values**."
         )
-    
-    numeric_columns = df.select_dtypes(
-        include="number"
-    ).columns.tolist()
-    
+
     if numeric_columns:
-        st.write(
-            f"🔢 The dataset contains {len(numeric_columns)} numeric columns."
+
+        highest_mean_column = (
+            df[numeric_columns]
+            .mean()
+            .idxmax()
         )
-    
-        highest_mean_column = df[numeric_columns].mean().idxmax()
-    
+
         st.info(
-            f"📈 '{highest_mean_column}' has the highest average value "
+            f"**{highest_mean_column}** has "
+            f"the highest average value "
             f"among the numeric columns."
         )
-    else:
-        st.warning(
-            "No numeric columns were found for numerical analysis."
-        )
 
-    st.subheader("🩺 Data Quality Check")
 
-    total_cells = df.shape[0] * df.shape[1]
-    
+    # ---------------- DATA QUALITY ----------------
+
+    st.subheader(
+        "🩺 Data Quality Check"
+    )
+
+    total_cells = (
+        df.shape[0] * df.shape[1]
+    )
+
     if total_cells > 0:
+
         quality_score = (
-            (total_cells - total_missing) / total_cells
+            (
+                total_cells
+                - total_missing
+            )
+            / total_cells
         ) * 100
-    
+
         st.metric(
             "Data Quality Score",
             f"{quality_score:.1f}%"
         )
-    
+
         if quality_score >= 95:
+
             st.success(
-                "Excellent! Your dataset is highly complete."
+                "Excellent! Your dataset "
+                "is highly complete."
             )
+
         elif quality_score >= 80:
+
             st.info(
-                "Good quality, but some values may need attention."
+                "Good quality, but some "
+                "values may need attention."
             )
+
         else:
+
             st.warning(
-                "This dataset needs cleaning before deeper analysis."
+                "This dataset may need "
+                "cleaning before deeper analysis."
             )
 
-    st.subheader("🛠️ Smart Cleaning Suggestions")
 
-    missing_by_column = df.isnull().sum()
+    # ---------------- CLEANING SUGGESTIONS ----------------
 
-    columns_with_missing = missing_by_column[
-        missing_by_column > 0
-    ]
+    st.subheader(
+        "🛠️ Smart Cleaning Suggestions"
+    )
+
+    columns_with_missing = (
+        missing_values[
+            missing_values > 0
+        ]
+    )
 
     if columns_with_missing.empty:
+
         st.success(
-            "Your dataset does not contain missing values."
-        )
-    else:
-        st.warning(
-            "Some columns contain missing values."
+            "Your dataset does not "
+            "contain missing values."
         )
 
-        for column, missing_count in columns_with_missing.items():
+    else:
+
+        for (
+            column,
+            missing_count
+        ) in columns_with_missing.items():
+
             missing_percentage = (
-                missing_count / len(df)
+                missing_count
+                / len(df)
             ) * 100
 
             st.write(
                 f"• **{column}** has "
-                f"{missing_count} missing values "
+                f"{missing_count} missing "
+                f"values "
                 f"({missing_percentage:.1f}%)."
             )
 
-        st.info(
-            "Consider filling missing values or removing "
-            "rows after checking the importance of each column."
-        )
 
-    st.subheader("🧹 Clean Your Data")
+    # ---------------- DATA CLEANING ----------------
 
-    st.write(
-        "Choose how you want to handle missing values."
+    st.subheader(
+        "🧹 Clean Your Data"
     )
 
     cleaning_option = st.selectbox(
@@ -202,74 +367,115 @@ if uploaded_file is not None:
         ]
     )
 
-    if st.button("Clean Dataset"):
+    if st.button(
+        "Clean Dataset"
+    ):
 
         cleaned_df = df.copy()
 
-        if cleaning_option == (
-            "Fill numeric missing values with mean"
+        if (
+            cleaning_option
+            == "Fill numeric missing values with mean"
         ):
 
-            numeric_columns = cleaned_df.select_dtypes(
-                include="number"
-            ).columns
+            for column in (
+                cleaned_df
+                .select_dtypes(
+                    include="number"
+                )
+                .columns
+            ):
 
-            for column in numeric_columns:
                 cleaned_df[column] = (
-                    cleaned_df[column].fillna(
-                        cleaned_df[column].mean()
+                    cleaned_df[column]
+                    .fillna(
+                        cleaned_df[column]
+                        .mean()
                     )
                 )
 
             st.success(
-                "Numeric missing values were filled with column averages!"
+                "Numeric missing values "
+                "were filled with column averages."
             )
 
-        elif cleaning_option == (
-            "Remove rows containing missing values"
-        ):
+        else:
 
-            cleaned_df = cleaned_df.dropna()
+            cleaned_df = (
+                cleaned_df.dropna()
+            )
 
             st.success(
-                "Rows containing missing values were removed!"
+                "Rows containing missing "
+                "values were removed."
             )
-        st.subheader("📊 Cleaning Results")
 
-        before_rows = df.shape[0]
-        after_rows = cleaned_df.shape[0]
+        st.session_state[
+            "cleaned_df"
+        ] = cleaned_df
 
-        before_missing = df.isnull().sum().sum()
-        after_missing = cleaned_df.isnull().sum().sum()
+        st.session_state[
+            "is_cleaned"
+        ] = True
 
-        col1, col2, col3, col4 = st.columns(4)
+
+    # ---------------- CLEANING RESULTS ----------------
+
+    if st.session_state[
+        "is_cleaned"
+    ]:
+
+        cleaned_df = (
+            st.session_state[
+                "cleaned_df"
+            ]
+        )
+
+        st.subheader(
+            "📊 Cleaning Results"
+        )
+
+        col1, col2, col3, col4 = (
+            st.columns(4)
+        )
 
         col1.metric(
             "Rows Before",
-            before_rows
+            df.shape[0]
         )
 
         col2.metric(
             "Rows After",
-            after_rows
+            cleaned_df.shape[0]
         )
 
         col3.metric(
-            "Missing Values Before",
-            before_missing
+            "Missing Before",
+            df.isnull().sum().sum()
         )
 
         col4.metric(
-            "Missing Values After",
-            after_missing
+            "Missing After",
+            cleaned_df
+            .isnull()
+            .sum()
+            .sum()
         )
 
-        st.subheader("✅ Cleaned Dataset")
+        st.subheader(
+            "✅ Cleaned Dataset"
+        )
 
-        st.dataframe(cleaned_df)
+        st.dataframe(
+            cleaned_df,
+            use_container_width=True
+        )
 
         cleaned_csv = (
-            cleaned_df.to_csv(index=False)
+            cleaned_df
+            .to_csv(
+                index=False
+            )
             .encode("utf-8")
         )
 
@@ -280,66 +486,23 @@ if uploaded_file is not None:
             mime="text/csv"
         )
 
-    st.subheader("💬 Ask Artayb About Your Data")
 
-    user_question = st.text_input(
-        "Ask a question about your dataset"
+    # ---------------- DOWNLOAD ORIGINAL DATA ----------------
+
+    st.subheader(
+        "⬇️ Download Original Data"
     )
 
-    if user_question:
-
-        question = user_question.lower()
-
-        if "row" in question:
-            st.info(
-                f"Your dataset contains {df.shape[0]} rows."
-            )
-
-        elif "column" in question:
-            st.info(
-                f"Your dataset contains {df.shape[1]} columns."
-            )
-
-        elif "missing" in question:
-            st.info(
-                f"Your dataset contains "
-                f"{df.isnull().sum().sum()} missing values."
-            )
-
-        elif "numeric" in question:
-            numeric_count = len(
-                df.select_dtypes(
-                    include="number"
-                ).columns
-            )
-
-            st.info(
-                f"Your dataset contains "
-                f"{numeric_count} numeric columns."
-            )
-
-        else:
-            st.warning(
-                "I can currently answer questions about "
-                "rows, columns, missing values, and numeric columns."
-            )
-
-    st.subheader("📄 Download Analysis Report")
-
-    report = f"""
-ARTAYB ANALYTICS REPORT
-
-Total Rows: {df.shape[0]}
-Total Columns: {df.shape[1]}
-Total Missing Values: {df.isnull().sum().sum()}
-
-Column Names:
-{", ".join(df.columns.tolist())}
-"""
+    original_csv = (
+        df.to_csv(
+            index=False
+        )
+        .encode("utf-8")
+    )
 
     st.download_button(
-        label="⬇️ Download Report",
-        data=report,
-        file_name="artayb_analysis_report.txt",
-        mime="text/plain"
+        label="Download Original CSV",
+        data=original_csv,
+        file_name="original_data.csv",
+        mime="text/csv"
     )
